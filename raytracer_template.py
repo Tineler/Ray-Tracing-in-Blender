@@ -270,16 +270,19 @@ class Raytracer(object):
         for object in self.objects:
             newIntersect = self.get_intersection(object, ray)
             if newIntersect is not None:
-                # TODO: This comparison is completely wrong..
-                if intersector is None or newIntersect.face_index > intersector.face_index:
+                if intersector is None:
                     intersector = self.get_intersection(object, ray)
+                else:
+                    oldDistance = self.scene.camera.location - intersector.get_location(True)
+                    newDistance = self.scene.camera.location - newIntersect.get_location(True)
+                    if newDistance < oldDistance:
+                        intersector = self.get_intersection(object, ray)
 
         if intersector is not None:
             diffuse = mathutils.Vector(intersector.object.active_material.diffuse_color)
             ambient = mathutils.Vector(self.scene.world.ambient_color)
-            # TODO: Replace return. But like this, it's easier to debug the visible intersector.
-            return diffuse
-            #return mathutils.Color((diffuse.x*ambient.x, diffuse.y*ambient.y, diffuse.z*ambient.z))
+
+            return mathutils.Color((diffuse.x*ambient.x, diffuse.y*ambient.y, diffuse.z*ambient.z))
         else:
             return self.scene.world.horizon_color.copy()
 
