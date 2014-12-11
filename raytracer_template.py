@@ -219,8 +219,7 @@ class RaytracerRenderEngine(bpy.types.RenderEngine):
 
         for y in range(y_range[0], y_range[1]):
             pixel_buffer = []
-
-            y_view = (self.projection_plane_h/2) - (y*self.pixel_height + self.pixel_height/2)
+            y_view = (self.projection_plane_h/2) - ((y_range[1]-y)*self.pixel_height + self.pixel_height/2)
 
             for x in range(x_range[0], x_range[1]):
                 x_view = -(self.projection_plane_w/2) + (x*self.pixel_width + self.pixel_width/2)
@@ -236,7 +235,7 @@ class RaytracerRenderEngine(bpy.types.RenderEngine):
                 if self.test_break():
                     return
 
-            self.set_pixel_row(y - y_range[0], pixel_buffer, calc_y)
+            self.set_pixel_row(y + y_range[0], pixel_buffer, calc_y)
 
     def set_pixel_row(self, row_nr, pixels, calc_y):
         result = self.begin_result(0, row_nr, len(pixels), 1)
@@ -278,7 +277,9 @@ class Raytracer(object):
         if intersector is not None:
             diffuse = mathutils.Vector(intersector.object.active_material.diffuse_color)
             ambient = mathutils.Vector(self.scene.world.ambient_color)
-            return mathutils.Color((diffuse.x*ambient.x, diffuse.y*ambient.y, diffuse.z*ambient.z))
+            # TODO: Replace return. But like this, it's easier to debug the visible intersector.
+            return diffuse
+            #return mathutils.Color((diffuse.x*ambient.x, diffuse.y*ambient.y, diffuse.z*ambient.z))
         else:
             return self.scene.world.horizon_color.copy()
 
