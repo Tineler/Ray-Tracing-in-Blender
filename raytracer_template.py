@@ -263,24 +263,24 @@ class Raytracer(object):
                 self.lights.append(object)
 
     def trace(self, ray):
-        # TODO: Test für Aufgabe 1, kann danach gelöscht werden
         if self.test_outputs > 0:
             ray.info()
             self.test_outputs -= 1
 
+        intersector = None
         for object in self.objects:
-            intersector = self.get_intersection(object, ray)
-            if intersector is not None:
-                diffuse = mathutils.Vector(object.active_material.diffuse_color)
-                ambient = mathutils.Vector(self.scene.world.ambient_color)
+            newIntersect = self.get_intersection(object, ray)
+            if newIntersect is not None:
+                # TODO: This comparison is completely wrong..
+                if intersector is None or newIntersect.face_index > intersector.face_index:
+                    intersector = self.get_intersection(object, ray)
 
-                diffuse.dot(ambient)
-                color = mathutils.Color((diffuse.x, diffuse.y, diffuse.z))
-            else:
-                color = self.scene.world.horizon_color.copy()
-
-
-        return color
+        if intersector is not None:
+            diffuse = mathutils.Vector(intersector.object.active_material.diffuse_color)
+            ambient = mathutils.Vector(self.scene.world.ambient_color)
+            return mathutils.Color((diffuse.x*ambient.x, diffuse.y*ambient.y, diffuse.z*ambient.z))
+        else:
+            return self.scene.world.horizon_color.copy()
 
     def is_object_between(self, object, start, end):
         """ returns True if 'object' is between points start and end """
