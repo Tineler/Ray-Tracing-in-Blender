@@ -277,24 +277,32 @@ class Raytracer(object):
                 normal = intersector.get_normal().normalized()
 
                 if(normal * lightDirection >= 0):
-                    #Calculate diffused light
-                    diffuseFactor = normal * lightDirection
-                    diffuseWithFactor = diffuse*diffuseFactor
-                    resultDiffuse = mathutils.Color((diffuseWithFactor.x*light.data.color.r, diffuseWithFactor.y*light.data.color.g, diffuseWithFactor.z*light.data.color.b))
+                    hasIntersection = False
+                    #Check if intersector lies under a shadow.
+                    for object in self.objects:
+                        if(self.is_object_between(object, intersector.get_location(), light.location)):
+                            hasIntersection = True
+                            break
 
-                    color = color + resultDiffuse
+                    if(hasIntersection == False):
+                        #Calculate diffused light.
+                        diffuseFactor = normal * lightDirection
+                        diffuseWithFactor = diffuse*diffuseFactor
+                        resultDiffuse = mathutils.Color((diffuseWithFactor.x*light.data.color.r, diffuseWithFactor.y*light.data.color.g, diffuseWithFactor.z*light.data.color.b))
 
-                    #Calculate specular reflection
-                    specular = mathutils.Vector(intersector.object.active_material.specular_color)
-                    view = (self.scene.camera.location - intersector.get_location()).normalized()
+                        color = color + resultDiffuse
 
-                    reflection = 2 * normal * (normal.dot(lightDirection)) - lightDirection
-                    specularFactor = pow((reflection.dot(view)), intersector.object.active_material.specular_hardness)
+                        #Calculate specular reflection.
+                        specular = mathutils.Vector(intersector.object.active_material.specular_color)
+                        view = (self.scene.camera.location - intersector.get_location()).normalized()
 
-                    specularWithFactor =specular*specularFactor
-                    resultSpecular = mathutils.Color((specularWithFactor.x*light.data.color.r, specularWithFactor.y*light.data.color.g, specularWithFactor.z*light.data.color.b))
+                        reflection = 2 * normal * (normal.dot(lightDirection)) - lightDirection
+                        specularFactor = pow((reflection.dot(view)), intersector.object.active_material.specular_hardness)
 
-                    color = color + resultSpecular
+                        specularWithFactor =specular*specularFactor
+                        resultSpecular = mathutils.Color((specularWithFactor.x*light.data.color.r, specularWithFactor.y*light.data.color.g, specularWithFactor.z*light.data.color.b))
+
+                        color = color + resultSpecular
         else:
             color = self.scene.world.horizon_color.copy()
 
