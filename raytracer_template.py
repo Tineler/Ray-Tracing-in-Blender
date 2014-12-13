@@ -2,20 +2,12 @@ import bpy
 import mathutils
 import math
 
-"""
-to reload/install module
-
-bpy.ops.wm.addon_install( filepath="/Path/to/location/of/raytracer_template.py" )
-bpy.ops.wm.addon_enable( module="raytracer_template" )
-
-"""
-
 ##############################################################
 # ADDON INFO
 ##############################################################
 bl_info = {
             "name": "Raytracer",
-            "author": "Matthias Buechi",
+            "author": "Matthias Buechi, Martin Haas",
             "category": "Render"
             }
 
@@ -262,10 +254,6 @@ class Raytracer(object):
                 self.lights.append(object)
 
     def trace(self, ray):
-        if self.test_outputs > 0:
-            ray.info()
-            self.test_outputs -= 1
-
         intersector = None
         for object in self.objects:
             newIntersect = self.get_intersection(object, ray)
@@ -282,9 +270,18 @@ class Raytracer(object):
             diffuse = mathutils.Vector(intersector.object.active_material.diffuse_color)
             ambient = mathutils.Vector(self.scene.world.ambient_color)
 
-            return mathutils.Color((diffuse.x*ambient.x, diffuse.y*ambient.y, diffuse.z*ambient.z))
+            color = mathutils.Color((diffuse.x*ambient.x, diffuse.y*ambient.y, diffuse.z*ambient.z))
+
+            for light in self.lights:
+                diffuseFactor = intersector.get_normal(True) * (light.location - intersector.location).normalized()
+                diffuseWithFactor = diffuse*diffuseFactor
+                resultDiffuse = mathutils.Color((diffuseWithFactor.x*light.data.color.r, diffuseWithFactor.y*light.data.color.g, diffuseWithFactor.z*light.data.color.b))
+
+                color = color + resultDiffuse
         else:
-            return self.scene.world.horizon_color.copy()
+            color = self.scene.world.horizon_color.copy()
+
+        return color
 
     def is_object_between(self, object, start, end):
         """ returns True if 'object' is between points start and end """
